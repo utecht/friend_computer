@@ -55,11 +55,13 @@ post "/payload/:name" do |name|
     release.clone_repo
     release.check_version
     release.cleanup
-    message = %(New Release Detected for #{release.repo_name} created by #{release.pusher}
+    message = <<~EOS
+      New Release Detected for #{release.repo_name} created by #{release.pusher}
 
-Release Name: #{release.ref}
-VersionIRI: #{release.version_iri}
-VersionInfo: #{release.version_info})
+      Release Name: #{release.ref}
+      VersionIRI: #{release.version_iri}
+      VersionInfo: #{release.version_info})
+    EOS
     puts message
     if ENV.key? "FC_MAIL"
       Mail.deliver do
