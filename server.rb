@@ -7,7 +7,7 @@ require "fileutils"
 require "nokogiri"
 require "mail"
 
-if ENV.has_key? "FC_MAIL"
+if ENV.key? "FC_MAIL"
   Mail.defaults do
     delivery_method :smtp, address: ENV["FC_MAIL"], port: 25
   end
@@ -16,7 +16,7 @@ else
 end
 
 class Release
-  attr_reader :ref, :pusher, :repo_name, :versionIRI, :versionInfo
+  attr_reader :ref, :pusher, :repo_name, :version_iri, :version_info
 
   def initialize(name, payload)
     @base_path = "/tmp/friend_computer"
@@ -36,14 +36,14 @@ class Release
 
   def check_version
     owl = File.open("#{@base_path}/#{@repo_name}/#{@name}.owl") { |f| Nokogiri::XML(f) }
-    iri = owl.xpath('//owl:versionIRI/@rdf:resource').first
-    @versionIRI = iri.value unless iri == nil
-    info = owl.xpath('//owl:versionInfo').first
-    @versionInfo = info.content unless info == nil
+    iri = owl.xpath("//owl:versionIRI/@rdf:resource").first
+    @version_iri = iri.value unless iri.nil?
+    info = owl.xpath("//owl:versionInfo").first
+    @version_info = info.content unless info.nil?
   end
 
   def cleanup
-    FileUtils.remove_dir("#{@base_path}/#{@repo_name}", :force => true)
+    FileUtils.remove_dir("#{@base_path}/#{@repo_name}", force: true)
   end
 end
 
@@ -55,16 +55,16 @@ post "/payload/:name" do |name|
     release.clone_repo
     release.check_version
     release.cleanup
-    message = %[New Release Detected for #{release.repo_name} created by #{release.pusher}
+    message = %(New Release Detected for #{release.repo_name} created by #{release.pusher}
 
 Release Name: #{release.ref}
-VersionIRI: #{release.versionIRI}
-VersionInfo: #{release.versionInfo}]
+VersionIRI: #{release.version_iri}
+VersionInfo: #{release.version_info})
     puts message
-    if ENV.has_key? "FC_MAIL"
+    if ENV.key? "FC_MAIL"
       Mail.deliver do
-        from 'friend_computer@cafe-trauma.com'
-        to 'jrutecht@uams.edu'
+        from "friend_computer@cafe-trauma.com"
+        to ["jrutecht@uams.edu", "MBrochhausen@uams.edu"]
         subject "New Release #{release.repo_name}"
         body message
       end
